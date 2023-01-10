@@ -2,9 +2,12 @@ package com.example.activitatgaleriaimatges;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 
 import androidx.activity.result.ActivityResult;
@@ -16,34 +19,77 @@ import androidx.appcompat.app.AppCompatActivity;
 public class MainActivity extends AppCompatActivity {
 
     public static int RC_PHOTO_PICKER = 0;
+    ActivityResultLauncher<Intent> activityResultLauncherCamera;
+    ActivityResultLauncher<Intent> someActivityResultLauncher;
+
+    ImageView vistaImatge;
+    Button botoObrirGaleria;
+    Button botoObrirCamera;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-    }
-
-    public void openSomeActivityForResult(View view) {
-        ActivityResultLauncher<Intent> someActivityResultLauncher = registerForActivityResult(
+        botoObrirGaleria = findViewById(R.id.buttonGallery);
+        botoObrirCamera = findViewById(R.id.buttonCamera);
+        someActivityResultLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 new ActivityResultCallback<ActivityResult>() {
                     @Override
                     public void onActivityResult(ActivityResult result) {
-                        if (result.getResultCode() == Activity.RESULT_OK) {
-                            // There are no request codes
+                        if(result.getResultCode() == Activity.RESULT_OK){
                             Intent data = result.getData();
-                            Uri uri = data.getData();
-                            ImageView imageView = findViewById(R.id.imageView);
-                            imageView.setImageURI(uri);
+                            Uri URI=data.getData();
+                            vistaImatge=findViewById(R.id.imageView);
+                            vistaImatge.setImageURI(URI);
                         }
                     }
                 });
 
-        //Create Intent
-        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        activityResultLauncherCamera = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                new ActivityResultCallback<ActivityResult>() {
+                    @Override
+                    public void onActivityResult(ActivityResult result) {
+                        if(result.getResultCode() == Activity.RESULT_OK){
+                            Intent data = result.getData();
+                            Bundle extBundle = data.getExtras();
+                            Bitmap imageBitmap =(Bitmap) extBundle.get("data");
+                            vistaImatge.setImageBitmap(imageBitmap);
+                        }
+                    }
+                }
+        );
+
+        botoObrirGaleria.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                openSomeActivityForResult(null);
+            }
+        });
+
+        botoObrirCamera.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                obrirCamera();
+            }
+        });
+
+    }
+
+    public void openSomeActivityForResult(View view) {
+        /*Ens porta a la galeria*/
+        Intent intent=new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("image/jpg");
         intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
-        //Launch activity to get result
         someActivityResultLauncher.launch(intent);
     }
 
+    public void obrirCamera(){
+        /*Ens porta a la camera*/
+        Intent intent=new Intent((MediaStore.ACTION_IMAGE_CAPTURE));
+        intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
+        someActivityResultLauncher.launch(intent);
+    }
 }
+
