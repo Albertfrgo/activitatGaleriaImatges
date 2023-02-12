@@ -18,8 +18,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
 
-    public static int RC_PHOTO_PICKER = 0;
-    ActivityResultLauncher<Intent> activityResultLauncherCamera;
+    public static final int RC_PHOTO_PICKER = 1;
     ActivityResultLauncher<Intent> someActivityResultLauncher;
 
     ImageView vistaImatge;
@@ -29,67 +28,64 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.main_activity);
+        vistaImatge = findViewById(R.id.imageView);
         botoObrirGaleria = findViewById(R.id.buttonGallery);
         botoObrirCamera = findViewById(R.id.buttonCamera);
+
         someActivityResultLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 new ActivityResultCallback<ActivityResult>() {
                     @Override
                     public void onActivityResult(ActivityResult result) {
                         if(result.getResultCode() == Activity.RESULT_OK){
+                            //There are no request codes
                             Intent data = result.getData();
-                            Uri URI=data.getData();
-                            vistaImatge=findViewById(R.id.imageView);
+                            Uri URI = data.getData();
+                            vistaImatge = findViewById(R.id.imageView);
                             vistaImatge.setImageURI(URI);
                         }
                     }
                 });
 
-        activityResultLauncherCamera = registerForActivityResult(
-                new ActivityResultContracts.StartActivityForResult(),
-                new ActivityResultCallback<ActivityResult>() {
-                    @Override
-                    public void onActivityResult(ActivityResult result) {
-                        if(result.getResultCode() == Activity.RESULT_OK){
-                            Intent data = result.getData();
-                            Bundle extBundle = data.getExtras();
-                            Bitmap imageBitmap =(Bitmap) extBundle.get("data");
-                            vistaImatge.setImageBitmap(imageBitmap);
-                        }
-                    }
-                }
-        );
-
         botoObrirGaleria.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                openSomeActivityForResult(null);
+                openGallery(null);
             }
         });
 
         botoObrirCamera.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                obrirCamera();
+                dispatchTakePictureIntent();
             }
         });
-
     }
 
-    public void openSomeActivityForResult(View view) {
-        /*Ens porta a la galeria*/
-        Intent intent=new Intent(Intent.ACTION_GET_CONTENT);
+    public void openGallery(View view){
+        //Create intent
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("image/jpg");
         intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
+        //Launch Activity to get the result
         someActivityResultLauncher.launch(intent);
     }
 
-    public void obrirCamera(){
-        /*Ens porta a la camera*/
-        Intent intent=new Intent((MediaStore.ACTION_IMAGE_CAPTURE));
-        intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
-        someActivityResultLauncher.launch(intent);
+    private void dispatchTakePictureIntent(){
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        startActivityForResult(takePictureIntent, RC_PHOTO_PICKER);
     }
+
+    @Override
+    protected void onActivityResult(int codiRequerit, int codiResultant, Intent dades) {
+        super.onActivityResult(codiRequerit, codiResultant, dades);
+        if (codiRequerit == RC_PHOTO_PICKER && codiResultant == RESULT_OK) {
+            Bundle extras = dades.getExtras();
+            Bitmap imatgeBitmap = (Bitmap) extras.get("data");
+            vistaImatge.setImageBitmap(imatgeBitmap);
+        }
+    }
+
 }
 
